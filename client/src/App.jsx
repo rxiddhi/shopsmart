@@ -10,7 +10,7 @@ function App() {
             .then(data => setData(data))
             .catch(err => console.error('Error fetching health check:', err));
     }, []);
-
+// .
     return (
         <div className="container">
             <h1>ShopSmart</h1>
