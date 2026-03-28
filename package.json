@@ -1,0 +1,16 @@
+{
+  "name": "shopsmart-monorepo",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w backend",
+    "dev:backend": "npm run dev -w backend",
+    "dev:backend:5001": "PORT=5001 npm run dev -w backend",
+    "dev:frontend": "npx serve frontend -l 3000",
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "test": "npm run test -w backend && npm run test -w frontend -- --watchAll=false"
+  }
+}
