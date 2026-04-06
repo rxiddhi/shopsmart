@@ -57,7 +57,7 @@ jobs:
 
       # Step 2: Deploy to server (EC2 or any remote machine)
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -73,7 +73,7 @@ jobs:
               || pm2 start server.js --name celestique-api
             pm2 save
             echo "Deployed at $(date)"
-      - uses: appleboy/ssh-action@v1.0.3
+      - uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
