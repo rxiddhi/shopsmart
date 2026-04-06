@@ -10,7 +10,7 @@ jobs:
 
     steps:
       # Step 1: Download your repository code into the VM
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Step 2: Setup Node.js
       - name: Setup Node.js
@@ -53,7 +53,7 @@ jobs:
 
     steps:
       # Step 1: Download your repository code into the VM
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Step 2: Deploy to server (EC2 or any remote machine)
       - name: Deploy to EC2
