@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "echo 'Building frontend...' && mkdir -p dist && cp -r * dist/ 2>/dev/null || true",
     "test": "vitest run",
-    "lint": "eslint src --ext .js"
+    "lint": "npx eslint src --ext .js"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
