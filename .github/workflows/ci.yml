@@ -1,46 +1,78 @@
-name: CI Pipeline
+name: Full CI/CD   # Name of the workflow (just for display in GitHub UI)
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+on: [push, pull_request]   # Trigger workflow when:
+                           # 1. Code is pushed
+                           # 2. Pull request is created/updated
 
 jobs:
-  test-and-lint:
-    name: Test & Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
+  build:   # Job name (you can have multiple jobs like test, deploy, etc.)
+    runs-on: ubuntu-latest   # GitHub gives a fresh Linux virtual machine
 
-  build-frontend:
-    name: Build Frontend
-    runs-on: ubuntu-latest
-    needs: [test-and-lint]
     steps:
+      # Step 1: Download your repository code into the VM
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+
+      # Step 3: Cache dependencies to speed up future runs
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm   # Folder where npm stores downloaded packages
+          key: node-${{ hashFiles('package-lock.json') }}
+          # If package-lock.json changes → cache refreshes
+
+      # Step 4: Install all dependencies (node_modules created here)
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 5: Run ESLint to check code quality
+      - name: Lint check
+        run: npm run lint
+        # If lint fails → workflow stops ❌
+
+      # Step 6: Run tests (unit + integration depending on setup)
+      - name: Run tests
+        run: npm test
+        # If tests fail → deployment is blocked ❌
+
+      # Step 7: Build the frontend application
+      - name: Build frontend
+        run: npm run build
         working-directory: ./frontend
 
-  deploy-backend:
-    name: Deploy to EC2
-    needs: [build-frontend]
+  deploy:
+    needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
     steps:
+      # Step 1: Download your repository code into the VM
       - uses: actions/checkout@v4
+
+      # Step 2: Deploy to server (EC2 or any remote machine)
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu/celestique/logs
+            cd /home/ubuntu/celestique
+            git fetch origin main && git reset --hard origin/main
+            npm ci
+            cd backend && npm ci --omit=dev
+            pm2 describe celestique-api > /dev/null 2>&1 \
+              && pm2 restart celestique-api \
+              || pm2 start server.js --name celestique-api
+            pm2 save
+            echo "Deployed at $(date)"
       - uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
