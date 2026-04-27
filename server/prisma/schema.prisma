@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Product model with all fields and category-specific attributes
+model Product {
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  category    String // 'digital_assets' | 'tools' | 'jewellery' | 'fashion'
+  sellerType  String // Must match seller's type
+  sellerId    String
+  attributes  String // JSON string for category-specific attributes
+  stock       Int     @default(0)
+  isAvailable Boolean @default(true)
+  images      String // JSON string array of image URLs
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  seller     Seller      @relation(fields: [sellerId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  // Indexes for performance
+  @@index([category, sellerType])
+  @@index([sellerId])
+}
+
+// Seller model with authentication and business fields
+model Seller {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  passwordHash String
+
+  // Seller type determines what they can sell
+  sellerType String // 'digital_assets' | 'tools' | 'jewellery' | 'fashion'
+
+  // Business information
+  businessName String
+  businessInfo String // JSON string: { address, phone, taxId, bankDetails }
+
+  // Status
+  status   String  @default("pending") // 'pending' | 'active' | 'suspended'
+  verified Boolean @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  products Product[]
+
+  // Indexes
+  @@index([email])
+  @@index([sellerType])
+}
+
+// User model with profile fields
+model User {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  passwordHash String
+
+  // Profile
+  phone   String?
+  address String? // JSON string: { street, city, state, zip, country }
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  cart   CartItem[]
+  orders Order[]
+
+  // Indexes
+  @@index([email])
+}
+
+// CartItem model with user and product relations
+model CartItem {
+  id        String @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int    @default(1)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Unique constraint: one product per user in cart
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// Order model with shipping and payment fields
+model Order {
+  id     String @id @default(uuid())
+  userId String
+
+  // Order details
+  orderNumber String @unique
+  status      String @default("pending") // 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
+  total       Float
+
+  // Shipping
+  shippingAddress String // JSON string
+  shippingMethod  String
+  trackingNumber  String?
+
+  // Payment
+  paymentMethod String
+  paymentStatus String @default("pending") // 'pending' | 'completed' | 'failed' | 'refunded'
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  // Indexes
+  @@index([userId])
+  @@index([orderNumber])
+}
+
+// OrderItem model with price snapshot fields
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+
+  // Snapshot of product at time of purchase
+  productName String
+  price       Float
+  quantity    Int
+  subtotal    Float
+
+  // Seller information
+  sellerId String
+
+  // Timestamp
+  createdAt DateTime @default(now())
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Indexes
+  @@index([orderId])
+  @@index([sellerId])
+}
