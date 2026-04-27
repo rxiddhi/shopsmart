@@ -5,6 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+RUN npm install && npm install -g pm2
+
 COPY . .
 
 ARG VITE_API_URL
@@ -20,4 +22,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["pm2-runtime", "start", "server.js", "nginx"]
