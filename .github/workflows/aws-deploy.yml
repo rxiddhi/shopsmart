@@ -10,7 +10,7 @@ env:
   ECR_BACKEND_REPOSITORY: shopsmart-backend
   ECS_SERVICE_FRONTEND: shopsmart-frontend-service
   ECS_SERVICE_BACKEND: shopsmart-backend-service
-  ECS_CLUSTER: shopsmart-cluster
+  ECS_CLUSTER: shopsmart-cluster-v2 
   ECS_TD_FRONTEND: .aws/task-definition-frontend.json
   ECS_TD_BACKEND: .aws/task-definition-backend.json
   CONTAINER_NAME_FRONTEND: shopsmart-frontend
